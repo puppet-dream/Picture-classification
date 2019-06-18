@@ -17,11 +17,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 LABEL_FILE = '../labels.txt'
 IMAGE_SIZE = 32  # 图片默认大小
 num_classes = 10  # 图片种类数
-labels_dict = {0: '三色堇', 1: '八仙花', 2: '彼岸花', 3: '梨花', 4: '牵牛花', 5: '蔷薇', 6: '薰衣草', 7: '蝴蝶兰', 8: '鸡蛋花', 9: '鸢尾'}
+labels_dict = {0: 'sansejin', 1: 'baxianhua', 2: 'bianhua', 3: 'lihua', 4: 'qianniuhua', 5: 'qiangwei', 6: 'xunyicao', 7: 'hudielan', 8: 'jidanhua', 9: 'yuanwei'}
 
 
-x_train, y_train = read.read_images_labels(data_dir='../train_images/', batch_size=10000)
-x_test, y_test = read.read_images_labels(data_dir='../test_images/', batch_size=1000)
+x_train, y_train = read.read_images_labels(data_dir='E:/program/train', batch_size=92000)
+x_test, y_test = read.read_images_labels(data_dir='E:/program/test', batch_size=9800)
 x_train_one = x_train * (1. / 255) - 0.5
 x_test_one = x_test * (1. / 255) - 0.5
 print(type(x_train))
@@ -52,15 +52,15 @@ model.add(Dense(10, activation='softmax'))
 print(model.summary())
 
 try:
-    model.load_weights("../flower10model1.h5")
+    model.load_weights("../flower10model2.h5")
     print("成功加载已有模型，继续训练该模型")
 except:
     print("没有模型加载，开始训练新模型")
 
 model.compile(loss='binary_crossentropy', optimizer='adamax', metrics=['accuracy'])
-train_history = model.fit(x=x_train_one, y=y_train, validation_split=0.2, epochs=40, batch_size=128, verbose=2)
+train_history = model.fit(x=x_train_one, y=y_train, validation_split=0.2, epochs=5, batch_size=128, verbose=2)
 
-model.save_weights("../flower10model1.h5")
+model.save_weights("../flower10model2.h5")
 print("保存刚训练的模型")
 
 result = model.evaluate(x_test_one, y_test, verbose=1)

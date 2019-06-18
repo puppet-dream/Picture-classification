@@ -15,7 +15,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 # x_train, y_train = read_images_labels(data_dir='../train_images/', batch_size=10000)
-x_test, y_test = read.read_images_labels(data_dir='../test_images/', batch_size=1100, shuffle=False)
+x_test, y_test = read.read_images_labels(data_dir='E:/program/test/', batch_size=9800, shuffle=False)
 # x_train_one = x_train * (1. / 255) - 0.5
 x_test_one = x_test * (1. / 255) - 0.5
 
@@ -44,7 +44,7 @@ model.add(Dense(10, activation='softmax'))
 print(model.summary())
 
 
-model.load_weights("../flower10model1.h5")
+model.load_weights("../flower10model2.h5")
 print("成功加载已有模型，开始检验准确率")
 
 
@@ -101,7 +101,7 @@ for j in range(len(prediction)):
 print("err_list:", err_list)
 print("images_number:", len(y_ver))
 print("err_number:", len(err_list))
-print("accuracy_rate:", 1 - len(err_list) / 1000)  # 预测准确率
+print("accuracy_rate:", 1 - len(err_list) / len(y_ver))  # 预测准确率
 
 # 获取预测出错的图片在其类别中的索引
 err_0 = []

@@ -3,13 +3,13 @@ import random
 from PIL import Image
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 
-
-data_dir = '../train_images/'
-LABEL_FILE = '../labels.txt'
-# 图片默认大小
-IMAGE_SIZE = 32
-num_classes = 10
+data_dir = '../train_images/'  # 图片所在文件夹地址
+LABEL_FILE = '../labels.txt'   # 标签文件位置（自动生成）
+IMAGE_SIZE = 32  # 图片默认大小
+num_classes = 10  # 图片种类的数量
+labels_dict = {}
 
 
 def get_filepaths_and_labels(data_dir):
@@ -22,8 +22,6 @@ def get_filepaths_and_labels(data_dir):
         raise ValueError('cannot find the dir: ' + data_dir)
 
     filepaths = []
-    labels_dict = {}
-
     index = 0
     for labeldir in os.listdir(data_dir):
         namedir = os.path.join(data_dir, labeldir)
@@ -84,9 +82,13 @@ def get_images_labels(filepaths, labels_dict, batch_size):
 
 
 def re_imgs_labes(imgs, labels):
+    """
+           对图片和labels进行预处理
+           :param imgs
+           :param labels
+           :return [imgs], [relabels]
+    """
     batch_size = len(imgs)
-
-    # 图片一致化
     imgs = imgs.reshape([batch_size, IMAGE_SIZE, IMAGE_SIZE, 3])
     # reimgs = imgs * (1. / 255) - 0.5
 
@@ -103,6 +105,7 @@ def re_imgs_labes(imgs, labels):
     return imgs, relabels
 
 
+# 主函数
 def read_images_labels(data_dir, batch_size=1000, shuffle=True):
     # 获取路径和label字典
     data_paths, labels_dict = get_filepaths_and_labels(data_dir)
@@ -124,5 +127,47 @@ def read_images_labels(data_dir, batch_size=1000, shuffle=True):
     return reimgs, relabels
 
 
+# 显示图片和labels
+def plot_images_labels(images, labels):
+    plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
+    plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
+    num = len(images)
+    fig = plt.gcf()
+    fig.set_size_inches(12, 14)
+    if num % 5 == 0:
+        row = num // 5
+    else:
+        row = num // 5 + 1
+    for i in range(num):
+        ax = plt.subplot(row, 5, 1+i)
+        ax.imshow(images[i], cmap='binary')
+        title = 'label:' + str(labels[i])
+        ax.set_title(title, fontsize=10)
+        ax.set_xticks([])
+        ax.set_yticks([])
+    plt.show()
+
+
+# 调试用
 if __name__ == "__main__":
-    read_images_labels(data_dir)
+    # 读取图片和labels
+    x_test, y_test = read_images_labels(data_dir=data_dir, batch_size=100, shuffle=False)
+    x_test_one = x_test * (1. / 255) - 0.5  # 归一化处理
+
+    # 获取未经处理的labels
+    labels = []
+    for i in range(len(y_test)):
+        label = y_test[i]
+        for j in range(10):
+            if label[j] == 1:
+                labels.append(j)
+    print("labels:", labels)
+    print(labels_dict)
+
+    # 获取label对应的类型
+    type=[]
+    for label in labels:
+        for key in labels_dict:
+            if label == labels_dict[key]:
+                type.append(key)
+    plot_images_labels(x_test[:10], type)

@@ -24,7 +24,8 @@ LABEL_FILE = '../labels.txt'
 IMAGE_SIZE = 32  # 图片默认大小
 num_classes = 10  # 图片种类数
 data_dir = '../train_images/'
-labels = {0: '三色堇', 1: '八仙花', 2: '彼岸花', 3: '梨花', 4: '牵牛花', 5: '蔷薇', 6: '薰衣草', 7: '蝴蝶兰', 8: '鸡蛋花', 9: '鸢尾'}
+labels = {0: 'sansejin', 1: 'baxianhua', 2: 'bianhua', 3: 'lihua', 4: 'qianniuhua',
+          5: 'qiangwei', 6: 'xunyicao', 7: 'hudielan', 8: 'jidanhua', 9: 'yuanwei'}
 
 
 # 读取图片文件
