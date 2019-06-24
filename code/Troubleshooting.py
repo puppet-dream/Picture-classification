@@ -15,9 +15,10 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 # x_train, y_train = read_images_labels(data_dir='../train_images/', batch_size=10000)
-x_test, y_test = read.read_images_labels(data_dir='E:/program/test/', batch_size=9800, shuffle=False)
+x_test, y_test = read.read_images_labels(data_dir='E:/program/dataSet/Picture-classification/test_images/', batch_size=1200, shuffle=False)
 # x_train_one = x_train * (1. / 255) - 0.5
 x_test_one = x_test * (1. / 255) - 0.5
+
 
 model = Sequential()
 model.add(Conv2D(filters=48, kernel_size=(3, 3), input_shape=(32, 32, 3), activation='relu', padding='same'))
@@ -26,7 +27,10 @@ model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
 model.add(Dropout(0.20))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(filters=82, kernel_size=(3, 3), activation='relu', padding='same'))
+model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
+model.add(Dropout(0.20))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
 model.add(Dropout(0.20))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
@@ -34,17 +38,19 @@ model.add(Dropout(0.20))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Conv2D(filters=48, kernel_size=(3, 3), activation='relu', padding='same'))
 model.add(Dropout(0.20))
-model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
 model.add(Dropout(0.25))
 model.add(Dense(1000, activation='relu'))
 model.add(Dropout(0.25))
+model.add(Dense(500, activation='relu'))
+model.add(Dropout(0.25))
+model.add(Dense(250, activation='relu'))
+model.add(Dropout(0.25))
 model.add(Dense(10, activation='softmax'))
 print(model.summary())
 
-
-model.load_weights("../flower10model2.h5")
+model.load_weights("../flower10model.h5")
 print("成功加载已有模型，开始检验准确率")
 
 
@@ -91,7 +97,7 @@ label_6 = label_5 + labels.count(6)
 label_7 = label_6 + labels.count(7)
 label_8 = label_7 + labels.count(8)
 label_9 = label_8 + labels.count(9)
-# print(label_9)
+# print(label_7)
 
 # 获取预测出错的图片索引
 err_list = []

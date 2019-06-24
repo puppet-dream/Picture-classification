@@ -32,7 +32,11 @@ labels = {0: 'sansejin', 1: 'baxianhua', 2: 'bianhua', 3: 'lihua', 4: 'qianniuhu
 def image_read(filename):
     img_list = []
     img = Image.open(filename)
-    img = img.resize((IMAGE_SIZE, IMAGE_SIZE))
+
+    # 如果不是三通道就转为三通道
+    img = change_image_channels(img)
+
+    img = img.resize((IMAGE_SIZE, IMAGE_SIZE), Image.ANTIALIAS)
     img = np.array(img)
     img_list.append(img)
     img = np.array(img_list)
@@ -42,6 +46,18 @@ def image_read(filename):
 def imreadex(filename):
     return cv2.imdecode(np.fromfile(filename, dtype=np.uint8), cv2.IMREAD_COLOR)
 
+
+# 通道转换
+def change_image_channels(image):
+    #  4通道转3通道
+    if image.mode == 'RGBA':
+        r, g, b, a = image.split()
+        image = Image.merge("RGB", (r, g, b))
+
+    #  1 通道转3通道
+    elif image.mode != 'RGB':
+        image = image.convert("RGB")
+    return image
 
 
 class CardPredictor:
