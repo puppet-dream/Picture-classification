@@ -24,8 +24,16 @@ LABEL_FILE = '../labels.txt'
 IMAGE_SIZE = 32  # 图片默认大小
 num_classes = 10  # 图片种类数
 data_dir = '../train_images/'
-labels = {0: 'sansejin', 1: 'baxianhua', 2: 'bianhua', 3: 'lihua', 4: 'qianniuhua',
-          5: 'qiangwei', 6: 'xunyicao', 7: 'hudielan', 8: 'jidanhua', 9: 'yuanwei'}
+labels = {}
+
+
+def read_label_dict():
+    with open(LABEL_FILE, 'r', encoding='utf-8') as f:
+        s = f.readlines()
+        for l in s:
+            list = l.split(':')
+            labels[eval(list[0])] = list[1][:-1]
+    f.close()
 
 
 # 读取图片文件
@@ -40,6 +48,7 @@ def image_read(filename):
     img = np.array(img)
     img_list.append(img)
     img = np.array(img_list)
+
     return img
 
 
@@ -66,13 +75,16 @@ class CardPredictor:
 
     def train_model(self):
         self.model = Sequential()
-        self.model.add(Conv2D(filters=48, kernel_size=(3, 3), input_shape=(image_size, image_size, 3), activation='relu', padding='same'))
+        self.model.add(Conv2D(filters=48, kernel_size=(3, 3), input_shape=(32, 32, 3), activation='relu', padding='same'))
         self.model.add(Dropout(0.20))
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
         self.model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
         self.model.add(Dropout(0.20))
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(filters=82, kernel_size=(3, 3), activation='relu', padding='same'))
+        self.model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
+        self.model.add(Dropout(0.20))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
         self.model.add(Dropout(0.20))
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
         self.model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
@@ -80,11 +92,14 @@ class CardPredictor:
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
         self.model.add(Conv2D(filters=48, kernel_size=(3, 3), activation='relu', padding='same'))
         self.model.add(Dropout(0.20))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
 
         self.model.add(Flatten())
         self.model.add(Dropout(0.25))
         self.model.add(Dense(1000, activation='relu'))
+        self.model.add(Dropout(0.25))
+        self.model.add(Dense(500, activation='relu'))
+        self.model.add(Dropout(0.25))
+        self.model.add(Dense(250, activation='relu'))
         self.model.add(Dropout(0.25))
         self.model.add(Dense(10, activation='softmax'))
         print(self.model.summary())
@@ -92,6 +107,7 @@ class CardPredictor:
             self.model.load_weights("../flower10model1.h5")
             print("模型加载成功")
         else:
+            print('没有模型加载，开始训练新模型')
             x_train, y_train = read.read_images_labels(data_dir=data_dir, batch_size=10000)
             x_train_one = x_train * (1. / 255) - 0.5
             self.model.compile(loss='binary_crossentropy', optimizer='adamax', metrics=['accuracy'])
@@ -112,15 +128,26 @@ class CardPredictor:
 
         img = img.reshape([1, IMAGE_SIZE, IMAGE_SIZE, 3])
         img = img * (1. / 255) - 0.5
-        resp = self.model.predict_classes(img)[0]
-        label = labels[resp]
-        return label
+
+        resp = self.model.predict(img)[0]
+        r = self.model.predict_classes(img)[0]
+
+        read_label_dict()
+        label = labels[r]
+        num = 0
+        pre = ''
+        for re in resp:
+            pre = pre + labels[num] + ':' + str(re) + '\n'
+            num += 1
+        return label, pre
 
 
 if __name__ == '__main__':
     c = CardPredictor()
     c.train_model()
     pic_path = askopenfilename(title="选择识别图片", filetypes=[("jpg图片", "*.jpg")])
-    img = imreadex(pic_path)
-    r = c.predict(img)
+    img = image_read(pic_path)
+    r, pre = c.predict(img)
     print(r)
+    print(pre)
+

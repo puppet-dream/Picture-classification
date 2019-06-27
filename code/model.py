@@ -19,13 +19,12 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 LABEL_FILE = '../labels.txt'
 IMAGE_SIZE = 32  # 图片默认大小
 num_classes = 10  # 图片种类数
-labels_dict = {0: 'sansejin', 1: 'baxianhua', 2: 'bianhua', 3: 'lihua', 4: 'qianniuhua',
-               5: 'qiangwei', 6: 'xunyicao', 7: 'hudielan', 8: 'jidanhua', 9: 'yuanwei'}
+label_dict = {}
 
 x_train, y_train = read.read_images_labels(
-    data_dir='E:/program/train/', batch_size=90000)
-x_test, y_test = read.read_images_labels(
-    data_dir='E:/program/test/', batch_size=9800)
+    data_dir='E:/program/images/train/', batch_size=10000, shuffle=True, original_img=False)
+x_test, y_test, imgs = read.read_images_labels(
+    data_dir='E:/program/images/test/', batch_size=1200, shuffle=True, original_img=True)
 x_train_re = x_train * (1. / 255) - 0.5
 x_test_re = x_test * (1. / 255) - 0.5
 
@@ -36,14 +35,10 @@ model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
 model.add(Dropout(0.20))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(filters=80, kernel_size=(3, 3), activation='relu', padding='same'))
-model.add(Dropout(0.20))
-model.add(Conv2D(filters=96, kernel_size=(3, 3), activation='relu', padding='same'))
+model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
 model.add(Dropout(0.20))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(filters=96, kernel_size=(3, 3), activation='relu', padding='same'))
-model.add(Dropout(0.20))
-model.add(Conv2D(filters=80, kernel_size=(3, 3), activation='relu', padding='same'))
+model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
 model.add(Dropout(0.20))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding='same'))
@@ -64,23 +59,33 @@ model.add(Dense(10, activation='softmax'))
 print(model.summary())
 
 try:
-    model.load_weights("../flower10model4.h5")
+    model.load_weights("../flower10model2.h5")
     print("成功加载已有模型，继续训练该模型")
 except:
     print("没有模型加载，开始训练新模型")
 
 model.compile(loss='binary_crossentropy', optimizer='adamax', metrics=['accuracy'])
-train_history = model.fit(x=x_train_re, y=y_train, validation_split=0.2, epochs=5, batch_size=128, verbose=2)
+train_history = model.fit(x=x_train_re, y=y_train, validation_split=0.2, epochs=0, batch_size=128, verbose=2)
 
-model.save_weights("../flower10model1.h5")
+model.save_weights("../flower10model2.h5")
 print("保存刚训练的模型")
 
 result = model.evaluate(x_test_re, y_test, verbose=1)
 print('acc:', result[1])
 
-x_ver_img = x_test[0:10]
+x_ver_img = imgs[0:10]
 x_ver = x_test_re[0:10]
 y_ver = y_test[0:10]
+
+
+def read_label_dict():
+    with open(LABEL_FILE, 'r', encoding='utf-8') as f:
+        s = f.readlines()
+        for l in s:
+            list = l.split(':')
+            label_dict[eval(list[0])] = list[1][:-1]
+    f.close()
+    print(label_dict)
 
 
 def read_labels(y_ver):
@@ -102,6 +107,7 @@ def get_probability(labels, prediction_labels):
     return probability
 
 
+read_label_dict()
 prediction_labels = model.predict_classes(x_test_re)
 y_test = read_labels(y_test)
 probability = get_probability(y_test, prediction_labels)
@@ -115,7 +121,7 @@ print("prediction:", prediction)
 
 type = []
 for label in labels:
-    type.append(labels_dict[label])
+    type.append(label_dict[label])
 print("种类", type)
 
 
@@ -138,6 +144,5 @@ def plot_images_labels(images, labels):
         ax.set_yticks([])
     plt.show()
 
-
-# plot_images_labels(x_ver_img, type)
+plot_images_labels(x_ver_img, type)
 

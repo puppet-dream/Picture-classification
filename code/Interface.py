@@ -3,8 +3,6 @@ from tkinter.filedialog import *
 from tkinter import ttk
 from PIL import Image, ImageTk
 import cv2
-import threading
-import time
 import predict_Image as predict
 
 
@@ -27,7 +25,7 @@ class Surface(ttk.Frame):
         frame_left = ttk.Frame(self)  # 使用Frame办法增加一层容器 就是左边显示图片的容器
         frame_right1 = ttk.Frame(self)  # 使用Frame办法增加一层容器：用于存储并显示识别的数据
         frame_right2 = ttk.Frame(self)  # 使用Frame办法增加一层容器：用于让用户进行点击图片或者摄像头识别的操作
-        win.title("车牌识别")  # 窗口的名称
+        win.title("花的种类识别")  # 窗口的名称
         win.state("zoomed")  # state设置按钮组件状态,可选的有NORMAL、ACTIVE、 DISABLED。默认 NORMAL。zoomed是放大的意思
         self.pack(fill=tk.BOTH, expand=tk.YES, padx="5", pady="5")
         # fill设置组件是否水平或垂直方向填充
@@ -46,46 +44,60 @@ class Surface(ttk.Frame):
         frame_right1.pack(side=TOP, expand=1, fill=tk.Y)
         frame_right2.pack(side=RIGHT, expand=0)
         # 创建label标签
-        ttk.Label(frame_left, text='原图：').pack(anchor="nw")
+        ttk.Label(frame_left, text='原图：').pack(anchor="center")
         # ttk是tkinter里的一个模块，Label是ttk里的一个类 这个类有很多属性：https://www.cnblogs.com/mathpro/p/8052501.html
         # anchor  锚选项，当可用空间大于所需求空间时，决定控件放置于容器何处  N,E,S,W,NW,NE,SW,SE,CENTER(默认值)，八个方向以及中心
 
         # row,column row为行，column为例，设置组件放置于第几行第几例 取值为行，例的序号
         # sticky 设置组件在网格中的对齐方式 值：N、E、S、W、NW、NE、SW、SE、CENTER
-        from_pic_ctl = ttk.Button(frame_right2, text="来自图片", width=20, command=self.from_pic)
+        from_pic_img = ttk.Button(frame_right2, text="选择图片", width=15, command=self.from_img)
+        from_pic_ctl = ttk.Button(frame_right2, text="开始识别", width=15, command=self.from_pic)
+
         self.image_ctl = ttk.Label(frame_left)
-        self.image_ctl.pack(anchor="nw")
+        self.image_ctl.pack(anchor="center")
 
         ttk.Label(frame_right1, text='识别结果：').grid(column=0, row=0, sticky=tk.W)
         self.r_ctl = ttk.Label(frame_right1, text="")
         self.r_ctl.grid(column=0, row=1, sticky=tk.W)
 
-        from_pic_ctl.pack(anchor="se", pady="2")
+        ttk.Label(frame_right1, text='识别细节：').grid(column=0, row=2, sticky=tk.W)
+        self.r_c = ttk.Label(frame_right1, text="")
+        self.r_c.grid(column=0, row=3, sticky=tk.W)
+
+        from_pic_img.pack(anchor="center", pady="2")
+        from_pic_ctl.pack(anchor="center", pady="2")
         self.predictor = predict.CardPredictor()
         self.predictor.train_model()
 
+    # 获取图片
     def get_imgtk(self, img_bgr):
         img = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
         im = Image.fromarray(img)
         imgtk = ImageTk.PhotoImage(image=im)
         wide = imgtk.width()
         high = imgtk.height()
-        if wide != self.viewwide or high != self.viewhigh:
-            im = im.resize((self.viewwide, self.viewhigh), Image.ANTIALIAS)
+        if wide >= self.viewwide or high >= self.viewhigh:
+            im = im.resize((self.viewwide, self.viewhigh))
             imgtk = ImageTk.PhotoImage(image=im)
         return imgtk
 
-    def from_pic(self):
+    # 显示图片
+    def from_img(self):
         self.thread_run = False
         self.pic_path = askopenfilename(title="选择识别图片", filetypes=[("jpg图片", "*.jpg")])
         if self.pic_path:
-            img = predict.image_read(self.pic_path)
             img_bgr = predict.imreadex(self.pic_path)
             self.imgtk = self.get_imgtk(img_bgr)
             self.image_ctl.configure(image=self.imgtk)
-            r = self.predictor.predict(img)#获取识别结果
-            self.r_ctl.configure(text=str(r))
-            print(r)
+
+    # 获取识别结果
+    def from_pic(self):
+        img = predict.image_read(self.pic_path)
+        r, pre = self.predictor.predict(img)
+        self.r_ctl.configure(text=str(r))
+        self.r_c.configure(text=str(pre))
+        print(r)
+        print(pre)
 
 
 def close_window():

@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 
-data_dir = 'E:/program/dataSet/Picture-classification/train_images/'  # 图片所在文件夹地址
+data_dir = 'E:/program/images/test/'  # 图片所在文件夹地址
 LABEL_FILE = '../labels.txt'  # 标签文件位置（自动生成）
 IMAGE_SIZE = 32  # 图片默认大小
 num_classes = 10  # 图片种类的数量
@@ -78,6 +78,8 @@ def get_images_labels(filepaths, labels_dict, batch_size):
     """
     imgs = []
     labels = []
+    err = []
+    ims = []
     batch_size = min(len(filepaths), batch_size)
     print("图片数量：", len(filepaths))
     for j in range(batch_size):
@@ -86,17 +88,28 @@ def get_images_labels(filepaths, labels_dict, batch_size):
         # 如果不是三通道就转为三通道
         img = change_image_channels(img)
 
-        img = img.resize((IMAGE_SIZE, IMAGE_SIZE), Image.ANTIALIAS)
+        try:
+            im = img.resize((IMAGE_SIZE, IMAGE_SIZE), Image.ANTIALIAS)
+        except:
+            err.append(filepaths[j])
+            continue
+
         img = np.array(img)
+        im = np.array(im)
 
         # 获取目录名作为labels
         img_label = os.path.split(os.path.dirname(filepaths[j]))[1]
         img_label = labels_dict[img_label]
 
+        ims.append(im)
         imgs.append(img)
         labels.append(img_label)
     imgs = np.array(imgs)
-    return imgs, labels
+    ims = np.array(ims)
+    print('读取失败的图片:', err)
+    for e in err:
+        os.remove(e)
+    return ims, labels, imgs
 
 
 def data_augmentation(images, mode='train', flip=False,
@@ -211,7 +224,7 @@ def re_imgs_labes(imgs, labels):
 
 
 # 主函数
-def read_images_labels(data_dir, batch_size=1000, shuffle=True):
+def read_images_labels(data_dir, batch_size=1000, shuffle=True, original_img=False):
     # 获取路径和label字典
     data_paths, labels_dict = get_filepaths_and_labels(data_dir)
 
@@ -220,7 +233,7 @@ def read_images_labels(data_dir, batch_size=1000, shuffle=True):
         random.seed(0)
         random.shuffle(data_paths)
     filepath = data_paths
-    imgs, labels = get_images_labels(filepath, labels_dict, batch_size)
+    imgs, labels, ims = get_images_labels(filepath, labels_dict, batch_size)
     # print(imgs[0])
     # print(labels[0])
 
@@ -229,6 +242,8 @@ def read_images_labels(data_dir, batch_size=1000, shuffle=True):
     # 将label字典写入文件
     write_label_file(labels_dict, LABEL_FILE)
     print('finsh')
+    if original_img:
+        return reimgs, relabels, ims
     return reimgs, relabels
 
 
@@ -256,7 +271,7 @@ def plot_images_labels(images, labels):
 # 测试用
 if __name__ == "__main__":
     # 读取图片和labels
-    x_test, y_test = read_images_labels(data_dir=data_dir, batch_size=1000, shuffle=False)
+    x_test, y_test, imgs = read_images_labels(data_dir=data_dir, batch_size=1200, shuffle=False, original_img=True)
     x_test_one = x_test * (1. / 255) - 0.5  # 归一化处理
 
     # 获取未经处理的labels
@@ -275,4 +290,5 @@ if __name__ == "__main__":
         for key in labels_dict:
             if label == labels_dict[key]:
                 type.append(key)
-    plot_images_labels(x_test[:10], type)  # 显示图片和label，用于测试
+
+    plot_images_labels(imgs[:10], type)  # 显示图片和label，用于测试
